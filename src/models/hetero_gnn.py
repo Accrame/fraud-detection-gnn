@@ -172,3 +172,35 @@ class HeteroEdgeFraudGNN(nn.Module):
         logits = self.forward(x_dict, edge_index_dict, edge_attr)
         return F.softmax(logits, dim=1)[:, 1]
 
+
+def create_hetero_model_from_data(data, hidden_channels=64, num_layers=3, dropout=0.3):
+    """Helper to build a HeteroEdgeFraudGNN from a HeteroData object."""
+    node_types = list(data.node_types)
+    edge_types = list(data.edge_types)
+
+    # Find transaction edge type
+    target_edge_type = None
+    for et in edge_types:
+        if "transact" in et[1].lower():
+            target_edge_type = et
+            break
+
+    if target_edge_type is None:
+        target_edge_type = edge_types[0]
+
+    # Get edge feature dimension
+    edge_channels = 0
+    if hasattr(data[target_edge_type], "edge_attr"):
+        edge_attr = data[target_edge_type].edge_attr
+        if edge_attr is not None:
+            edge_channels = edge_attr.size(1)
+
+    return HeteroEdgeFraudGNN(
+        node_types=node_types,
+        edge_types=edge_types,
+        hidden_channels=hidden_channels,
+        edge_channels=edge_channels,
+        num_layers=num_layers,
+        dropout=dropout,
+        target_edge_type=target_edge_type,
+    )
