@@ -1,0 +1,94 @@
+# Model Configuration for Fraud Detection GNN
+
+# Model Architecture
+model:
+  type: "graphsage"  # Options: graphsage, gat, gin, hetero
+  hidden_channels: 64
+  num_layers: 3
+  dropout: 0.3
+
+  # GraphSAGE specific
+  aggregator: "mean"  # Options: mean, max, lstm
+
+  # GAT specific
+  heads: 4
+  attention_dropout: 0.3
+
+  # GIN specific
+  train_eps: true
+
+# Training Configuration
+training:
+  epochs: 100
+  learning_rate: 0.001
+  weight_decay: 1.0e-5
+  batch_size: 512
+
+  # Early stopping
+  patience: 20
+  min_delta: 0.001
+
+  # Loss function
+  use_focal_loss: true
+  focal_gamma: 2.0
+
+  # Class imbalance
+  compute_class_weights: true
+
+  # Neighbor sampling
+  neighbor_samples: [25, 10, 5]  # Per layer
+
+# Data Configuration
+data:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+
+  # Temporal split (recommended for fraud)
+  use_temporal_split: true
+
+  # Graph construction
+  user_col: "user_id"
+  merchant_col: "merchant_id"
+  amount_col: "amount"
+  timestamp_col: "timestamp"
+  label_col: "is_fraud"
+
+# Feature Engineering
+features:
+  node_features:
+    - transaction_count
+    - avg_amount
+    - std_amount
+    - max_amount
+    - unique_counterparties
+
+  edge_features:
+    - amount
+    - log_amount
+    - hour_sin
+    - hour_cos
+    - dow_sin
+    - dow_cos
+    - is_weekend
+
+# Inference Configuration
+inference:
+  threshold: 0.5
+  batch_size: 1024
+
+  # Risk levels
+  risk_thresholds:
+    critical: 0.9
+    high: 0.7
+    medium: 0.5
+    low: 0.3
+
+# Logging
+logging:
+  log_dir: "./logs"
+  checkpoint_dir: "./checkpoints"
+
+  # Weights & Biases
+  use_wandb: false
+  wandb_project: "fraud-detection-gnn"
