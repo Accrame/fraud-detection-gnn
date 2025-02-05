@@ -136,3 +136,48 @@ class GINWithJK(nn.Module):
             x = h.squeeze(0)
 
         return self.classifier(x)
+
+
+class EdgeFraudGIN(nn.Module):
+    """Edge-level GIN."""
+
+    def __init__(self, in_channels, hidden_channels, edge_channels=0,
+                 num_layers=3, dropout=0.3):
+        super().__init__()
+
+        self.node_encoder = FraudGIN(
+            in_channels=in_channels,
+            hidden_channels=hidden_channels,
+            out_channels=hidden_channels,
+            num_layers=num_layers,
+            dropout=dropout,
+        )
+
+        # Edge classifier
+        edge_input_dim = 2 * hidden_channels + edge_channels
+        self.edge_classifier = nn.Sequential(
+            nn.Linear(edge_input_dim, hidden_channels),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_channels, hidden_channels // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_channels // 2, 2),
+        )
+
+    def forward(self, x, edge_index, edge_attr=None):
+        node_emb = self.node_encoder.get_embeddings(x, edge_index)
+
+        src_emb = node_emb[edge_index[0]]
+        dst_emb = node_emb[edge_index[1]]
+
+        if edge_attr is not None:
+            edge_repr = torch.cat([src_emb, dst_emb, edge_attr], dim=1)
+        else:
+            edge_repr = torch.cat([src_emb, dst_emb], dim=1)
+
+        return self.edge_classifier(edge_repr)
+
+    def predict_proba(self, x, edge_index, edge_attr=None):
+        logits = self.forward(x, edge_index, edge_attr)
+        return F.softmax(logits, dim=1)[:, 1]
