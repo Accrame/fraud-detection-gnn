@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import torch
-from torch_geometric.data import Data
+from torch_geometric.data import Data, HeteroData
 
 
 class TransactionGraphBuilder:
@@ -203,3 +203,174 @@ class TransactionGraphBuilder:
 
         return train_mask, val_mask, test_mask
 
+    def build_hetero_graph(self, transactions, device_col="device_id", include_features=True):
+        """Build heterogeneous graph with user/merchant/device node types."""
+        data = HeteroData()
+
+        # ── Node mappings ──
+        users = transactions[self.user_col].unique()
+        merchants = transactions[self.merchant_col].unique()
+
+        self.user_mapping = {u: i for i, u in enumerate(users)}
+        self.merchant_mapping = {m: i for i, m in enumerate(merchants)}
+
+        # User node features
+        if include_features:
+            user_features = self._compute_user_features(transactions, len(users))
+            data["user"].x = user_features
+        else:
+            data["user"].x = torch.eye(len(users))
+
+        data["user"].num_nodes = len(users)
+
+        # Merchant node features
+        if include_features:
+            merchant_features = self._compute_merchant_features(
+                transactions, len(merchants)
+            )
+            data["merchant"].x = merchant_features
+        else:
+            data["merchant"].x = torch.eye(len(merchants))
+
+        data["merchant"].num_nodes = len(merchants)
+
+        # ── Transaction edges (user -> merchant) ──
+        edge_src = transactions[self.user_col].map(self.user_mapping).values
+        edge_dst = transactions[self.merchant_col].map(self.merchant_mapping).values
+
+        data["user", "transacts", "merchant"].edge_index = torch.tensor(
+            np.vstack([edge_src, edge_dst]), dtype=torch.long
+        )
+
+        # Reverse edges
+        data["merchant", "rev_transacts", "user"].edge_index = torch.tensor(
+            np.vstack([edge_dst, edge_src]), dtype=torch.long
+        )
+
+        # Edge features
+        edge_features = self._compute_edge_features(transactions)
+        data["user", "transacts", "merchant"].edge_attr = edge_features
+        data["merchant", "rev_transacts", "user"].edge_attr = edge_features
+
+        # ── Device nodes (optional) ──
+        if device_col and device_col in transactions.columns:
+            devices = transactions[device_col].unique()
+            device_mapping = {d: i for i, d in enumerate(devices)}
+
+            data["device"].x = torch.eye(len(devices))
+            data["device"].num_nodes = len(devices)
+
+            # User-device edges
+            user_device_pairs = transactions[
+                [self.user_col, device_col]
+            ].drop_duplicates()
+            ud_src = user_device_pairs[self.user_col].map(self.user_mapping).values
+            ud_dst = user_device_pairs[device_col].map(device_mapping).values
+
+            data["user", "uses", "device"].edge_index = torch.tensor(
+                np.vstack([ud_src, ud_dst]), dtype=torch.long
+            )
+            data["device", "used_by", "user"].edge_index = torch.tensor(
+                np.vstack([ud_dst, ud_src]), dtype=torch.long
+            )
+
+        # ── Labels ──
+        if self.label_col in transactions.columns:
+            data.y = torch.tensor(transactions[self.label_col].values, dtype=torch.long)
+
+        # Metadata
+        data.num_users = len(users)
+        data.num_merchants = len(merchants)
+
+        return data
+
+    def _compute_user_features(self, transactions, num_users):
+        """Compute features for user nodes."""
+        features = torch.zeros(num_users, 6)
+
+        user_stats = (
+            transactions.groupby(self.user_col)
+            .agg(
+                {
+                    self.amount_col: ["count", "mean", "std", "max"],
+                    self.merchant_col: "nunique",
+                }
+            )
+            .reset_index()
+        )
+        user_stats.columns = [
+            "user_id",
+            "tx_count",
+            "avg_amount",
+            "std_amount",
+            "max_amount",
+            "unique_merchants",
+        ]
+
+        for _, row in user_stats.iterrows():
+            idx = self.user_mapping.get(row["user_id"])
+            if idx is not None:
+                features[idx, 0] = row["tx_count"]
+                features[idx, 1] = row["avg_amount"]
+                features[idx, 2] = (
+                    row["std_amount"] if not np.isnan(row["std_amount"]) else 0
+                )
+                features[idx, 3] = row["max_amount"]
+                features[idx, 4] = row["unique_merchants"]
+                # Avg time between txs
+                if row["tx_count"] > 1:
+                    user_txs = transactions[
+                        transactions[self.user_col] == row["user_id"]
+                    ]
+                    if self.timestamp_col in user_txs.columns:
+                        ts = pd.to_datetime(user_txs[self.timestamp_col]).sort_values()
+                        avg_gap = ts.diff().dt.total_seconds().mean()
+                        features[idx, 5] = avg_gap if not np.isnan(avg_gap) else 0
+
+        # Normalize
+        for i in range(features.shape[1]):
+            col = features[:, i]
+            if col.std() > 0:
+                features[:, i] = (col - col.mean()) / col.std()
+
+        return features
+
+    def _compute_merchant_features(self, transactions, num_merchants):
+        """Compute features for merchant nodes."""
+        features = torch.zeros(num_merchants, 4)
+
+        merchant_stats = (
+            transactions.groupby(self.merchant_col)
+            .agg(
+                {
+                    self.amount_col: ["count", "mean", "std"],
+                    self.user_col: "nunique",
+                }
+            )
+            .reset_index()
+        )
+        merchant_stats.columns = [
+            "merchant_id",
+            "tx_count",
+            "avg_amount",
+            "std_amount",
+            "unique_users",
+        ]
+
+        for _, row in merchant_stats.iterrows():
+            idx = self.merchant_mapping.get(row["merchant_id"])
+            if idx is not None:
+                features[idx, 0] = row["tx_count"]
+                features[idx, 1] = row["avg_amount"]
+                features[idx, 2] = (
+                    row["std_amount"] if not np.isnan(row["std_amount"]) else 0
+                )
+                features[idx, 3] = row["unique_users"]
+
+        # Normalize
+        for i in range(features.shape[1]):
+            col = features[:, i]
+            if col.std() > 0:
+                features[:, i] = (col - col.mean()) / col.std()
+
+        return features
