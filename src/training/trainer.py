@@ -1,6 +1,5 @@
 """Training loop for GNN models."""
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,9 +19,17 @@ from .losses import FocalLoss
 class GNNTrainer:
     """Handles training, validation, early stopping and checkpointing."""
 
-    def __init__(self, model, data, learning_rate=0.001, weight_decay=1e-5,
-                 class_weights=None, use_focal_loss=True, focal_gamma=2.0,
-                 device="auto"):
+    def __init__(
+        self,
+        model,
+        data,
+        learning_rate=0.001,
+        weight_decay=1e-5,
+        class_weights=None,
+        use_focal_loss=True,
+        focal_gamma=2.0,
+        device="auto",
+    ):
         # TODO: add gradient clipping as a parameter
         if device == "auto":
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -49,15 +56,21 @@ class GNNTrainer:
         # Training state
         self.best_val_auc = 0
         self.patience_counter = 0
-        self.history: Dict[str, List[float]] = {
+        self.history: dict[str, list[float]] = {
             "train_loss": [],
             "val_loss": [],
             "val_auc": [],
             "val_f1": [],
         }
 
-    def train(self, epochs=100, patience=20, min_delta=0.001,
-              checkpoint_path=None, verbose=True):
+    def train(
+        self,
+        epochs=100,
+        patience=20,
+        min_delta=0.001,
+        checkpoint_path=None,
+        verbose=True,
+    ):
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer, mode="max", factor=0.5, patience=5, verbose=verbose
         )
@@ -133,7 +146,7 @@ class GNNTrainer:
 
         return loss.item()
 
-    def _validate(self) -> Tuple[float, Dict[str, float]]:
+    def _validate(self) -> tuple[float, dict[str, float]]:
         """Validate the model."""
         self.model.eval()
 

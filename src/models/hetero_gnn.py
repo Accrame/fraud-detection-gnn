@@ -14,8 +14,15 @@ from torch_geometric.nn import HeteroConv, SAGEConv
 class HeteroFraudGNN(nn.Module):
     """Heterogeneous GNN with per-type message passing."""
 
-    def __init__(self, node_types, edge_types, hidden_channels, out_channels,
-                 num_layers=3, dropout=0.3):
+    def __init__(
+        self,
+        node_types,
+        edge_types,
+        hidden_channels,
+        out_channels,
+        num_layers=3,
+        dropout=0.3,
+    ):
         super().__init__()
 
         self.node_types = node_types
@@ -118,9 +125,16 @@ class HeteroFraudGNN(nn.Module):
 class HeteroEdgeFraudGNN(nn.Module):
     """Edge-level hetero GNN — classifies transaction edges."""
 
-    def __init__(self, node_types, edge_types, hidden_channels, edge_channels=0,
-                 num_layers=3, dropout=0.3,
-                 target_edge_type=("user", "transacts", "merchant")):
+    def __init__(
+        self,
+        node_types,
+        edge_types,
+        hidden_channels,
+        edge_channels=0,
+        num_layers=3,
+        dropout=0.3,
+        target_edge_type=("user", "transacts", "merchant"),
+    ):
         super().__init__()
 
         self.target_edge_type = target_edge_type

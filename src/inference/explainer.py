@@ -148,7 +148,7 @@ class FraudExplainer:
 
         return importance
 
-    def _get_prediction(self, node_idx: int) -> Dict:
+    def _get_prediction(self, node_idx: int) -> dict:
         """Get prediction for a node."""
         with torch.no_grad():
             out = self.model(
@@ -164,7 +164,7 @@ class FraudExplainer:
             "confidence": probs.max().item(),
         }
 
-    def _get_edge_prediction(self, edge_idx: int) -> Dict:
+    def _get_edge_prediction(self, edge_idx: int) -> dict:
         """Get prediction for an edge."""
         with torch.no_grad():
             out = self.model(

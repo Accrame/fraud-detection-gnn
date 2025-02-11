@@ -7,8 +7,13 @@ import pandas as pd
 class FeatureExtractor:
     """Extracts behavioral, temporal and network features from transaction data."""
 
-    def __init__(self, user_col="user_id", merchant_col="merchant_id",
-                 amount_col="amount", timestamp_col="timestamp"):
+    def __init__(
+        self,
+        user_col="user_id",
+        merchant_col="merchant_id",
+        amount_col="amount",
+        timestamp_col="timestamp",
+    ):
         self.user_col = user_col
         self.merchant_col = merchant_col
         self.amount_col = amount_col
@@ -215,8 +220,9 @@ class FeatureExtractor:
         ]
 
 
-def compute_velocity_features(transactions, user_col="user_id",
-                              timestamp_col="timestamp", windows=[1, 6, 24]):
+def compute_velocity_features(
+    transactions, user_col="user_id", timestamp_col="timestamp", windows=[1, 6, 24]
+):
     """Transaction frequency in rolling time windows."""
     df = transactions.copy()
     df["timestamp"] = pd.to_datetime(df[timestamp_col])
@@ -236,7 +242,9 @@ def compute_velocity_features(transactions, user_col="user_id",
     return df
 
 
-def compute_graph_features(transactions, user_col="user_id", merchant_col="merchant_id"):
+def compute_graph_features(
+    transactions, user_col="user_id", merchant_col="merchant_id"
+):
     """Graph-based features using NetworkX (degree, clustering coeff)."""
     import networkx as nx
 

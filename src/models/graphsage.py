@@ -9,8 +9,15 @@ from torch_geometric.nn import SAGEConv
 class FraudGraphSAGE(nn.Module):
     """GraphSAGE for node-level fraud detection."""
 
-    def __init__(self, in_channels, hidden_channels, out_channels,
-                 num_layers=3, dropout=0.3, aggregator="mean"):
+    def __init__(
+        self,
+        in_channels,
+        hidden_channels,
+        out_channels,
+        num_layers=3,
+        dropout=0.3,
+        aggregator="mean",
+    ):
         super().__init__()
 
         self.num_layers = num_layers
@@ -65,8 +72,9 @@ class FraudGraphSAGE(nn.Module):
 class EdgeFraudGraphSAGE(nn.Module):
     """Edge-level fraud detection — predicts per-transaction."""
 
-    def __init__(self, in_channels, hidden_channels, edge_channels=0,
-                 num_layers=3, dropout=0.3):
+    def __init__(
+        self, in_channels, hidden_channels, edge_channels=0, num_layers=3, dropout=0.3
+    ):
         super().__init__()
 
         self.node_encoder = FraudGraphSAGE(

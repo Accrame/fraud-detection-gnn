@@ -1,2 +1,2 @@
-from .losses import FocalLoss
-from .trainer import GNNTrainer
+from .losses import FocalLoss  # noqa: F401
+from .trainer import GNNTrainer  # noqa: F401

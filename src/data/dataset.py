@@ -13,8 +13,14 @@ from .graph_builder import TransactionGraphBuilder
 class FraudDataset(InMemoryDataset):
     """Wraps transaction data into a PyG InMemoryDataset."""
 
-    def __init__(self, root, transactions=None, transform=None,
-                 pre_transform=None, pre_filter=None):
+    def __init__(
+        self,
+        root,
+        transactions=None,
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+    ):
         self.transactions = transactions
         super().__init__(root, transform, pre_transform, pre_filter)
         self.load(self.processed_paths[0])
@@ -62,8 +68,9 @@ class FraudDataset(InMemoryDataset):
         return f"{self.__class__.__name__}()"
 
 
-def create_synthetic_fraud_data(num_users=1000, num_merchants=200,
-                                num_transactions=10000, fraud_rate=0.05, seed=42):
+def create_synthetic_fraud_data(
+    num_users=1000, num_merchants=200, num_transactions=10000, fraud_rate=0.05, seed=42
+):
     """Generate fake transaction data for testing."""
     np.random.seed(seed)
 
@@ -135,7 +142,9 @@ def load_kaggle_fraud_data(path):
     return df[["user_id", "merchant_id", "amount", "timestamp", "is_fraud"]]
 
 
-def split_temporal(transactions, timestamp_col="timestamp", train_ratio=0.7, val_ratio=0.15):
+def split_temporal(
+    transactions, timestamp_col="timestamp", train_ratio=0.7, val_ratio=0.15
+):
     """Split by time so we don't leak future data into training."""
     df = transactions.sort_values(timestamp_col).reset_index(drop=True)
 

@@ -10,8 +10,16 @@ class FraudGAT(nn.Module):
     """Multi-head attention GNN. The attention weights are useful
     for interpretability — you can see which neighbors matter most."""
 
-    def __init__(self, in_channels, hidden_channels, out_channels,
-                 num_layers=3, heads=4, dropout=0.3, attention_dropout=0.3):
+    def __init__(
+        self,
+        in_channels,
+        hidden_channels,
+        out_channels,
+        num_layers=3,
+        heads=4,
+        dropout=0.3,
+        attention_dropout=0.3,
+    ):
         super().__init__()
 
         self.num_layers = num_layers
@@ -119,8 +127,15 @@ class FraudGAT(nn.Module):
 class EdgeFraudGAT(nn.Module):
     """Edge-level GAT — classifies transactions as fraud/legit."""
 
-    def __init__(self, in_channels, hidden_channels, edge_channels=0,
-                 num_layers=3, heads=4, dropout=0.3):
+    def __init__(
+        self,
+        in_channels,
+        hidden_channels,
+        edge_channels=0,
+        num_layers=3,
+        heads=4,
+        dropout=0.3,
+    ):
         super().__init__()
 
         self.node_encoder = FraudGAT(

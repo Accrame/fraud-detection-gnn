@@ -13,8 +13,15 @@ from torch_geometric.nn import GINConv
 
 class FraudGIN(nn.Module):
 
-    def __init__(self, in_channels, hidden_channels, out_channels,
-                 num_layers=3, dropout=0.3, train_eps=True):
+    def __init__(
+        self,
+        in_channels,
+        hidden_channels,
+        out_channels,
+        num_layers=3,
+        dropout=0.3,
+        train_eps=True,
+    ):
         super().__init__()
 
         self.num_layers = num_layers
@@ -73,8 +80,15 @@ class GINWithJK(nn.Module):
     """GIN + Jumping Knowledge — concatenates representations from all layers.
     Helps when graph has varying depths/diameters."""
 
-    def __init__(self, in_channels, hidden_channels, out_channels,
-                 num_layers=3, dropout=0.3, jk_mode="cat"):
+    def __init__(
+        self,
+        in_channels,
+        hidden_channels,
+        out_channels,
+        num_layers=3,
+        dropout=0.3,
+        jk_mode="cat",
+    ):
         super().__init__()
 
         self.num_layers = num_layers
@@ -141,8 +155,9 @@ class GINWithJK(nn.Module):
 class EdgeFraudGIN(nn.Module):
     """Edge-level GIN."""
 
-    def __init__(self, in_channels, hidden_channels, edge_channels=0,
-                 num_layers=3, dropout=0.3):
+    def __init__(
+        self, in_channels, hidden_channels, edge_channels=0, num_layers=3, dropout=0.3
+    ):
         super().__init__()
 
         self.node_encoder = FraudGIN(

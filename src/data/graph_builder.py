@@ -10,8 +10,14 @@ class TransactionGraphBuilder:
     """Builds transaction graphs from tabular data. Users and merchants become
     nodes, transactions become edges."""
 
-    def __init__(self, user_col="user_id", merchant_col="merchant_id",
-                 amount_col="amount", timestamp_col="timestamp", label_col="is_fraud"):
+    def __init__(
+        self,
+        user_col="user_id",
+        merchant_col="merchant_id",
+        amount_col="amount",
+        timestamp_col="timestamp",
+        label_col="is_fraud",
+    ):
         self.user_col = user_col
         self.merchant_col = merchant_col
         self.amount_col = amount_col
@@ -181,7 +187,9 @@ class TransactionGraphBuilder:
 
         return features
 
-    def get_train_test_masks(self, num_samples, train_ratio=0.7, val_ratio=0.15, seed=42):
+    def get_train_test_masks(
+        self, num_samples, train_ratio=0.7, val_ratio=0.15, seed=42
+    ):
         """Create train/val/test masks."""
         np.random.seed(seed)
         indices = np.random.permutation(num_samples)
@@ -203,7 +211,9 @@ class TransactionGraphBuilder:
 
         return train_mask, val_mask, test_mask
 
-    def build_hetero_graph(self, transactions, device_col="device_id", include_features=True):
+    def build_hetero_graph(
+        self, transactions, device_col="device_id", include_features=True
+    ):
         """Build heterogeneous graph with user/merchant/device node types."""
         data = HeteroData()
 
@@ -374,4 +384,3 @@ class TransactionGraphBuilder:
                 features[:, i] = (col - col.mean()) / col.std()
 
         return features
-
