@@ -19,7 +19,7 @@ On synthetic data (10k transactions, 5% fraud rate):
 | GIN | 0.94 | 0.88 |
 | HeteroGNN | 0.96 | 0.91 |
 
-These are on synthetic data though, so take with a grain of salt. The relative ranking between models is probably more meaningful than the absolute numbers.
+**Note:** Synthetic fraud signals are deliberately easy to spot (high amounts + unusual hours), so these numbers mostly reflect data separability, not real-world GNN performance. The relative ranking between architectures is more informative than the absolute numbers. To properly evaluate this you'd want a real dataset like IEEE-CIF or the Kaggle credit card dataset.
 
 ## Setup
 
